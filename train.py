@@ -20,16 +20,16 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
 from utils.dataloader import IRT
-from models.CNN_model import VargoNet
+from models.CNN import VargoNet
 
 
-CALTECH_PATH='/media/SSD0/datasets/101_ObjectCategories'
+CALTECH_PATH='/data'
 
 def main():
     parser = argparse.ArgumentParser(description='Caltech 101 classification')
 
-    parser.add_argument('--model', type=str, default='CNN', choices = ['CNN', 'BoW'],
-                        help='Select which model you want to train')
+    parser.add_argument('--dtype', type=str, default='img', choices = ['irt', 'img'],
+                        help='Select which data type you want to train')
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
@@ -41,7 +41,7 @@ def main():
                         help='input batch size for training (default: 16)')
     parser.add_argument('--test_batch_size', type=int, default=16, metavar='N',
                         help='input batch size for testing (default: 16)')
-    parser.add_argument('--epochs', type=int, default=40, metavar='N',
+    parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
                         help='learning rate (default: 1e-3)')
@@ -74,10 +74,13 @@ def main():
 
     if args.cuda:
         torch.cuda.manual_seed(args.seed)
-            
-    df_images = pd.read_csv('caltech101.csv',index_col=0)
+
+    if args.dtype == 'IRT':    
+        df_images = pd.read_csv('thermal_mat.csv',index_col=0)
+    elif args.dtype == 'img':
+        df_images = pd.read_csv('thermal_img.csv',index_col=0)
     images_paths = df_images['path'].values
-    labels_idx = df_images['label_idx'].values
+    labels_idx = df_images['label'].values
 
     # Split proportional for each category
     x_train, x_test, y_train, y_test = train_test_split(images_paths, labels_idx,
@@ -86,13 +89,11 @@ def main():
                                                         stratify=labels_idx)
 
 
-    if args.model == 'CNN':
-        model=trainVargoNet(args,x_train,y_train,save_path)
-        loss_test, accuracy,aca,f1_score,confusion_mx = testVargoNet(args,model,x_test,y_test)
-        print(f'Accuracy score for {args.model} is {accuracy*100:.2f}% and average loss is {loss_test:.2f}')
-        print(f'ACA score for {args.model} is {aca*100:.2f}%')
-    else:
-        print('Select a valid model: [CNN,BoW]')
+    
+    model=trainVargoNet(args,x_train,y_train,save_path)
+    loss_test, accuracy,aca,f1_score,confusion_mx = testVargoNet(args,model,x_test,y_test)
+    print(f'Accuracy score for {args.model} is {accuracy*100:.2f}% and average loss is {loss_test:.2f}')
+    print(f'ACA score for {args.model} is {aca*100:.2f}%')
 
 def seed_worker(worker_id):
     worker_seed = torch.initial_seed() % 2**32

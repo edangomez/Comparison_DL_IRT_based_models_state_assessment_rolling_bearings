@@ -14,7 +14,7 @@ from torch.utils.data import Dataset
 class IRT(Dataset):
   'Characterizes a dataset for PyTorch'
   def __init__(self, images_paths, labels, data_path, transform=None):
-        super(Caltech101, self).__init__()
+        super(IRT, self).__init__()
         'Initialization'
         self.labels = labels
         self.images_paths = images_paths
