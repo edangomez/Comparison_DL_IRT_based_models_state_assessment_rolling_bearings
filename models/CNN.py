@@ -53,7 +53,7 @@ class AlexNet(nn.Module):
 
     def forward(self,img):
 
-        x = F.relu(self.conv1(img[:,:,:-1])) # out_dim [110x110x96]
+        x = F.relu(self.conv1(img)) # out_dim [110x110x96]
         x = self.maxpool(x) # out_dim [55x55x96]
         x = F.relu(self.conv2(x))  # out_dim [29x29x256]
         x = self.maxpool(x)  # out_dim [14x14x256]
@@ -71,31 +71,72 @@ class AlexNet(nn.Module):
         x = self.fc4(x) # out_dim [1000x1]
 
         return x
+class HyAlexNet(nn.Module):
+    
+    def __init__(self, dtype):
+        super(HyAlexNet, self).__init__()
 
-    # def forward(self, img, irt):
-        
-    #     feat_irt = irt.flatten()
-    #     feat_irt = torch.tensor([feat_irt.mean(), feat_irt.std(), feat_irt.skew(), max(feat_irt)])
-    #     x = F.relu(self.conv1(img)) # out_dim [110x110x96]
-    #     x = self.maxpool(x) # out_dim [55x55x96]
-    #     x = F.relu(self.conv2(x))  # out_dim [29x29x256]
-    #     x = self.maxpool(x)  # out_dim [14x14x256]
-    #     # plt.imshow(self.weight2[0, 2])
-    #     # plt.show()
-    #     x = F.relu(self.conv3(x)) # out_dim [14x14x384]
-    #     x = self.maxpool(x)  # out_dim [7x7x256]
-    #     x = F.relu(self.conv4(x)) # out_dim [8x8x384]
-    #     x = self.maxpool(x)  # out_dim [4x4x256]
-    #     x = self.maxpool(x)  # out_dim [6x6x256]
-    #     x = x.reshape(x.shape[0], -1)  # out_dim [9216x1]
-    #     x = torch.cat((x, feat_irt), 1)
-    #     x = F.relu(self.fc1(x)) # out_dim [4096x1]
-    #     x = F.relu(self.fc2(x)) # out_dim [4096x1]
-    #     x = F.relu(self.fc3(x)) # out_dim [4096x1]
-    #     x = self.fc4(x) # out_dim [1000x1]
+        ##Combinada
+        if dtype == 'img':
+            self.conv1 = nn.Conv2d(in_channels=3, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
+            self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
+            self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) 
+            self.conv2 = nn.Conv2d(in_channels=96, out_channels=256, kernel_size=5, stride= 1, padding= 4)
+            self.weight2 = self.conv2.weight.data.numpy()
 
+            self.conv3 = nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, stride= 1, padding= 1) 
+            self.conv4 = nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1) 
+            self.fc1  = nn.Linear(in_features= 3456, out_features= 2304)
+            self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
+            self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
+            self.fc4 = nn.Linear(in_features=4096 , out_features=4)
+        elif dtype == 'hybrid':
+            self.conv1 = nn.Conv2d(in_channels=4, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
+            self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
+            self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) 
+            self.conv2 = nn.Conv2d(in_channels=96, out_channels=256, kernel_size=5, stride= 1, padding= 4)
+            self.weight2 = self.conv2.weight.data.numpy()
 
-    #     return x
+            self.conv3 = nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, stride= 1, padding= 1) 
+            self.conv4 = nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1) 
+            self.fc1  = nn.Linear(in_features= 3456, out_features= 2304)
+            self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
+            self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
+            self.fc4 = nn.Linear(in_features=4096 , out_features=4)
+        elif dtype == 'irt':
+            print('using irt_mat data')
+            self.conv1 = nn.Conv2d(in_channels=1, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
+            self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
+            self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) 
+            self.conv2 = nn.Conv2d(in_channels=96, out_channels=256, kernel_size=5, stride= 1, padding= 4)
+            self.conv3 = nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, stride= 1, padding= 1) 
+            self.conv4 = nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1) 
+            self.fc1  = nn.Linear(in_features= 3456, out_features= 2304)
+            self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
+            self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
+            self.fc4 = nn.Linear(in_features=4096 , out_features=4)
+
+    def forward(self,img, irt):
+        # print(img.size, irt.size)
+        img = torch.cat((img, irt), axis = 1)
+        x = F.relu(self.conv1(img)) # out_dim [110x110x96]
+        x = self.maxpool(x) # out_dim [55x55x96]
+        x = F.relu(self.conv2(x))  # out_dim [29x29x256]
+        x = self.maxpool(x)  # out_dim [14x14x256]
+        # plt.imshow(self.weight2[0, 2])
+        # plt.show()
+        x = F.relu(self.conv3(x)) # out_dim [14x14x384]
+        x = self.maxpool(x)  # out_dim [7x7x256]
+        x = F.relu(self.conv4(x)) # out_dim [8x8x384]
+        x = self.maxpool(x)  # out_dim [4x4x256]
+        x = self.maxpool(x)  # out_dim [6x6x256]
+        x = x.reshape(x.shape[0], -1)  # out_dim [9216x1]
+        x = F.relu(self.fc1(x)) # out_dim [4096x1]
+        x = F.relu(self.fc2(x)) # out_dim [4096x1]
+        x = F.relu(self.fc3(x)) # out_dim [4096x1]
+        x = self.fc4(x) # out_dim [1000x1]
+
+        return x
 
 ## EfficientNet implementation ----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -207,6 +248,7 @@ class InvertedResidualBlock(nn.Module):
 class EfficientNet(nn.Module):
     def __init__(self,  dtype, version, num_classes):
         super(EfficientNet, self).__init__()
+        self.dtype = dtype
         width_factor, depth_factor, dropout_rate = self.calculate_factors(version)
         last_channels = ceil(1280 * width_factor)
         self.pool = nn.AdaptiveAvgPool2d(1)
@@ -228,6 +270,8 @@ class EfficientNet(nn.Module):
             features = [CNNBlock(3, channels, 3, stride=2, padding=1)]
         elif dtype == 'irt':
             features = [CNNBlock(1, channels, 3, stride=2, padding=1)]
+        elif dtype == 'hybrid':
+            features = [CNNBlock(4, channels, 3, stride=2, padding=1)]
         in_channels = channels
 
         for expand_ratio, channels, repeats, stride, kernel_size in base_model:
@@ -253,9 +297,16 @@ class EfficientNet(nn.Module):
 
         return nn.Sequential(*features)
 
-    def forward(self, x):
-        x = self.pool(self.features(x))
-        return self.classifier(x.view(x.shape[0], -1))
+    def forward(self, img, irt=None):
+        if self.dtype in ['img', 'irt']:
+            x = img
+            x = self.pool(self.features(x))
+            return self.classifier(x.view(x.shape[0], -1))
+        elif self.dtype == 'hybrid':
+            x = torch.cat((img, irt), axis = 1)
+            x = self.pool(self.features(x))
+            return self.classifier(x.view(x.shape[0], -1))
+
 
 
 def test():
