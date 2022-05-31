@@ -3,6 +3,8 @@ import torch.nn.functional as F
 import torch
 import matplotlib.pyplot as plt
 from math import ceil
+import numpy as np
+from scipy.stats import kurtosis, skew, entropy, median_absolute_deviation
 
 ## Modified AlexNet implementation ------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -253,10 +255,16 @@ class EfficientNet(nn.Module):
         last_channels = ceil(1280 * width_factor)
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.features = self.create_features(width_factor, depth_factor, last_channels, dtype) # most of the backbone here
-        self.classifier = nn.Sequential(
-            nn.Dropout(dropout_rate),
-            nn.Linear(last_channels, num_classes),
-        )
+        if self.dtype =='hybrid2':
+            self.classifier = nn.Sequential(
+                nn.Dropout(dropout_rate),
+                nn.Linear(last_channels+5, num_classes),
+            )
+        else:
+            self.classifier = nn.Sequential(
+                nn.Dropout(dropout_rate),
+                nn.Linear(last_channels, num_classes),
+            )
 
     def calculate_factors(self, version, alpha=1.2, beta=1.1): # default values from paper 
         phi, res, drop_rate = phi_values[version] # we are not going to use resolution coefficient
@@ -266,7 +274,7 @@ class EfficientNet(nn.Module):
 
     def create_features(self, width_factor, depth_factor, last_channels, dtype):
         channels = int(32 * width_factor)
-        if dtype == 'img':
+        if dtype in ['img',  'hybrid2']:
             features = [CNNBlock(3, channels, 3, stride=2, padding=1)]
         elif dtype == 'irt':
             features = [CNNBlock(1, channels, 3, stride=2, padding=1)]
@@ -297,15 +305,32 @@ class EfficientNet(nn.Module):
 
         return nn.Sequential(*features)
 
-    def forward(self, img, irt=None):
+    def forward(self, img, irt=None, gpuID = 1):
         if self.dtype in ['img', 'irt']:
             x = img
             x = self.pool(self.features(x))
             return self.classifier(x.view(x.shape[0], -1))
         elif self.dtype == 'hybrid':
+            # print(irt.shape, img.shape)
             x = torch.cat((img, irt), axis = 1)
             x = self.pool(self.features(x))
             return self.classifier(x.view(x.shape[0], -1))
+        elif self.dtype == 'hybrid2':
+            # print('irt dim: ', irt.shape)
+            # print('img dim: ', img.shape)
+            x = img
+            x = self.pool(self.features(x))
+            x = x.view(x.shape[0], -1)
+            # irt = torch.Tensor.float(irt.view(irt.shape[0], -1))
+            irt = irt.cpu().numpy()
+            # print(x.shape, irt.shape)
+            # print(np.std(irt, axis = (2,3)).shape)
+            # print(irt.min(axis = (2,3)).shape)
+            feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
+            feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
+            # print(x.shape, feat_vect.shape)
+            x = torch.cat((x, feat_vect), axis=1)
+            return self.classifier(x)
 
 
 

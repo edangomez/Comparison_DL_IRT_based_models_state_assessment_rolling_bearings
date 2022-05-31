@@ -21,7 +21,7 @@ from torchvision import datasets, transforms
 
 from torch.utils.data import DataLoader
 
-from util.dataloader import IRT, IRTHybrid
+from util.dataloader import IRT, IRTHybrid, IRTHybrid2
 from models.CNN import AlexNet, EfficientNet, HyAlexNet
 
 
@@ -30,7 +30,7 @@ ROOT_PATH='/home/edgomez10/Project/TB-and-IB-analysis-of-IRT-for-the-state-asses
 def main():
     parser = argparse.ArgumentParser(description='Caltech 101 classification')
 
-    parser.add_argument('--dtype', type=str, default='hybrid', choices = ['img', 'irt', 'hybrid'],
+    parser.add_argument('--dtype', type=str, default='hybrid', choices = ['img', 'irt', 'hybrid', 'hybrid2', 'hybrid3'],
                         help='Select which model you want to train')
     parser.add_argument('--gpuID', type=int, default=1,
                         help='Select GPU ID for training and testing')
@@ -79,7 +79,7 @@ def main():
         save_path = os.path.join('Experiments_img', args.experiment_name)
     elif args.dtype == 'irt':
         save_path = os.path.join('Experiments_irt', args.experiment_name)
-    elif args.dtype == 'hybrid':
+    elif args.dtype in ['hybrid', 'hybrid2', 'hybrid3']:
         save_path = os.path.join('Experiments_hybrid', args.experiment_name)
     os.makedirs(save_path, exist_ok=True)
 
@@ -90,7 +90,7 @@ def main():
         df_images = pd.read_csv('thermal_mat.csv',index_col=0).sort_values(by=['path'])
     elif args.dtype == 'img':
         df_images = pd.read_csv('thermal_img.csv',index_col=0).sort_values(by=['path'])
-    elif args.dtype == 'hybrid':
+    elif args.dtype  in ['hybrid', 'hybrid2', 'hybrid3']:
         df_images = pd.read_csv('thermal_img.csv',index_col=0).sort_values(by=['path'])
         df_irt = pd.read_csv('thermal_mat.csv',index_col=0).sort_values(by=['path'])
         irt_paths = df_irt['path'].values
@@ -98,12 +98,12 @@ def main():
 
     images_paths = df_images['path'].values
     labels_idx = df_images['label'].values
-    if args.dtype == 'hybrid':
+    if args.dtype in ['hybrid', 'hybrid2', 'hybrid3']:
         # images_paths = np.concatenate((np.array([irt_paths]).T, np.array([images_paths]).T), axis = 1)
         paths = np.concatenate((np.reshape(np.array(df_images['path']), (2298,1)), np.reshape(np.array(df_irt['path']), (2298,1))), 1)
 
     # Split proportional for each category
-    if args.dtype == 'hybrid':
+    if args.dtype in ['hybrid', 'hybrid2', 'hybrid3']:
         x_train, x_test, y_train, y_test = train_test_split(paths, labels_idx,
                                                             test_size=0.3,
                                                             random_state=1234,
@@ -118,7 +118,7 @@ def main():
     print(f'Accuracy score for {args.dtype} is {accuracy*100:.2f}% and average loss is {loss_test:.2f}')
     print(f'ACA score for {args.dtype} is {aca*100:.2f}%')
     # breakpoint()
-    results = pd.DataFrame({'loss_test': [loss_test], 'accuracy': [accuracy], 'f1_score': [f1_score], 'confusion_mat':[confusion_mx.reshape(16)]})
+    results = pd.DataFrame({'loss_test': [loss_test], 'accuracy': [accuracy], 'ACA':[aca],'f1_score': [f1_score], 'confusion_mat':[confusion_mx.reshape(16)]})
     results.to_csv(os.path.join(save_path, f'metrics_{args.experiment_name}.csv'))
 
 
@@ -161,9 +161,9 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
     if dtype in ['irt', 'img']:
         print(f'Train {args.dtype} data loading ...')
         train_dataset=IRT(x_train, y_train, ROOT_PATH, transform=None, dtype=args.dtype)
-    elif dtype == 'hybrid':
+    elif dtype in ['hybrid', 'hybrid2', 'hybrid3']:
         print(f'Train {args.dtype} data loading ...')
-        train_dataset=IRTHybrid(x_train, y_train, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
+        train_dataset=IRTHybrid2(x_train, y_train, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
     train_loader = DataLoader(train_dataset,batch_size=args.batchSize, shuffle=True)#,**kwargs)
     
     ## Loss and optimizer
@@ -209,7 +209,7 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
             irt = irt.float()
             optimizer.zero_grad()
 
-            scores = model(data, irt)
+            scores = model(data, irt, gpuID)
             loss = criterion(scores, target)
             loss.backward()
             optimizer.step()
@@ -223,7 +223,7 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
     for epoch in range(1,args.epochs+1): 
 
         model.train()
-        if args.dtype == 'hybrid':
+        if args.dtype in ['hybrid', 'hybrid2', 'hybrid3']:
             train_loss = train_hybrid(epoch)
         else:
             train_loss = train(epoch)
@@ -277,9 +277,9 @@ def testNet(args,model,x_test,y_test, dtype, gpuID):
     if dtype in ['irt', 'img']:
         print(f'Test {args.dtype} data loading ...')
         test_dataset=IRT(x_test, y_test, ROOT_PATH, transform=None, dtype=args.dtype)
-    elif dtype == 'hybrid':
+    elif dtype in ['hybrid', 'hybrid2', 'hybrid3']:
         print(f'Test {args.dtype} data loading ...')
-        test_dataset=IRTHybrid(x_test, y_test, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
+        test_dataset=IRTHybrid2(x_test, y_test, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
 
     test_loader = DataLoader(test_dataset,batch_size=args.batchSize, shuffle=True,**kwargs)
     
@@ -312,14 +312,14 @@ def testNet(args,model,x_test,y_test, dtype, gpuID):
                 accuracy = num_correct /num_samples
                 preds=torch.cat((preds,predictions),0)
                 labels=torch.cat((labels,target),0)
-        elif dtype == 'hybrid':
+        elif dtype  in ['hybrid', 'hybrid2', 'hybrid3']:
             for batch_idx, (data, irt, target) in tqdm.tqdm(enumerate(test_loader), total = len(test_loader)):
                 if args.cuda:
                     data, irt, target = data.cuda(gpuID), irt.cuda(gpuID),target.cuda(gpuID)
                 data, irt, target = Variable(data), Variable(irt), Variable(target)
                 data, irt = data.float(), irt.float()
 
-                scores = model(data, irt)
+                scores = model(data, irt, args.gpuID)
                 loss = criterion(scores, target)
                 _, predictions = scores.max(1)
                 num_correct += (predictions == target).sum() 
@@ -340,3 +340,22 @@ def testNet(args,model,x_test,y_test, dtype, gpuID):
 
 if __name__ == '__main__':
     main()
+
+# for batch_idx, (data,irt, target) in enumerate(test_loader):
+#             if args.cuda:
+#                 data, irt, target = data.cuda(gpuID), irt.cuda(gpuID), target.cuda(gpuID)
+#             data, irt, target = Variable(data), Variable(irt), Variable(target)
+#             data = data.float()
+#             irt = irt.float()
+#             ## Forward Pass
+#             outputs = model(data, irt)
+#             loss = criterion(outputs,target)
+#             # _, predictions = scores.max() #Apply log_softmax activation to the predictions and pick the index of highest probability.
+#             _, predictions = torch.max(outputs, 1)
+#             num_correct += (predictions == target).sum()
+#             num_samples += predictions.size(0)
+#             loss_test += loss.item()
+#             accuracy = num_correct /num_samples
+#             # breakpoint()
+#             preds=torch.cat((preds,predictions),0)
+#             labels=torch.cat((labels,target),0)
