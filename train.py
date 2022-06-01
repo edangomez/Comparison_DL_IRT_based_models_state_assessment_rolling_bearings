@@ -66,8 +66,10 @@ def main():
                         help='Load presaved visual dict or checkpoints')
     parser.add_argument('--experiment_name', type=str, default='experiment1',
                         help='file on which to save model weights')
-
-
+    parser.add_argument('--size', type=str, default='b0', choices=['b0', 'original'],
+                        help='for hybrid models, if you want to resize data to efficientNet resolution')
+    parser.add_argument('--resize_type', type=str, default='pad',choices=['pad', 'interpol'],
+                        help='for hybrid models and no resize if padding is desired or interpolation')
 
 
     args = parser.parse_args()
@@ -160,10 +162,15 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
     
     if dtype in ['irt', 'img']:
         print(f'Train {args.dtype} data loading ...')
-        train_dataset=IRT(x_train, y_train, ROOT_PATH, transform=None, dtype=args.dtype)
+        train_dataset=IRT(x_train, y_train, ROOT_PATH, transform=None, dtype=args.dtype, size=args.size)
     elif dtype in ['hybrid', 'hybrid2', 'hybrid3']:
         print(f'Train {args.dtype} data loading ...')
-        train_dataset=IRTHybrid2(x_train, y_train, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
+        if args.size == 'b0':
+            print('resizing ...')
+            train_dataset=IRTHybrid(x_train, y_train, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
+        else:
+            print('no resize')
+            train_dataset=IRTHybrid2(x_train, y_train, ROOT_PATH, resize_type= args.resize_type,transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
     train_loader = DataLoader(train_dataset,batch_size=args.batchSize, shuffle=True)#,**kwargs)
     
     ## Loss and optimizer
@@ -276,10 +283,13 @@ def testNet(args,model,x_test,y_test, dtype, gpuID):
     # test_dataset=IRT(x_test, y_test, ROOT_PATH, transform=None, dtype=args.dtype)
     if dtype in ['irt', 'img']:
         print(f'Test {args.dtype} data loading ...')
-        test_dataset=IRT(x_test, y_test, ROOT_PATH, transform=None, dtype=args.dtype)
+        test_dataset=IRT(x_test, y_test, ROOT_PATH, transform=None, dtype=args.dtype, size=args.size)
     elif dtype in ['hybrid', 'hybrid2', 'hybrid3']:
         print(f'Test {args.dtype} data loading ...')
-        test_dataset=IRTHybrid2(x_test, y_test, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
+        if args.size == 'b0':
+            test_dataset=IRTHybrid(x_test, y_test, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
+        else:
+            test_dataset=IRTHybrid2(x_test, y_test, ROOT_PATH, resize_type= args.resize_type, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
 
     test_loader = DataLoader(test_dataset,batch_size=args.batchSize, shuffle=True,**kwargs)
     

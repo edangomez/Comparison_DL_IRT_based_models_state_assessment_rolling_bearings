@@ -18,7 +18,7 @@ import numpy as np
 
 class IRT(Dataset):
   'Characterizes a dataset for PyTorch'
-  def __init__(self, images_paths, labels, data_path, dtype = 'img', transform=None):
+  def __init__(self, images_paths, labels, data_path, size, dtype = 'img', transform=None):
         super(IRT, self).__init__()
         'Initialization'
         self.labels = labels
@@ -26,6 +26,7 @@ class IRT(Dataset):
         self.transform = transform
         self.data_path = data_path
         self.dtype = dtype
+        self.size = size
 
   def __len__(self):
         'Denotes the total number of samples'
@@ -41,16 +42,21 @@ class IRT(Dataset):
             label = self.labels[index]
             image = csv2numpy(path)
             shape1 = image.shape
+
+            if self.size == 'b0':
+                  image= np.array([cv.resize(image, (227,227), interpolation=cv.INTER_CUBIC)])  #W,H,C   [200, 300, 3]
+                  return image, label
             # print(shape1)
             if image.shape == (120, 161):
                   image = cv.resize(image, (321,240), interpolation=cv.INTER_CUBIC)  #W,H,C   [200, 300, 3]
             # shape2 = image.shape
             # if shape1!= shape2
             # print(image.shape)
+            # image= np.array([cv.resize(image, (227,227), interpolation=cv.INTER_CUBIC)])  #W,H,C   [200, 300, 3]
+            
             image = np.array([image])
-            # image= np.array([cv.resize(image, (321,240), interpolation=cv.INTER_CUBIC)])  #W,H,C   [200, 300, 3]
             # image = image.transpose(2, 0, 1) #C,W,H  [3,200,300]
-
+            # print(image.shape)
             if self.transform:
                   image = self.transform(image)
             return image, label
@@ -69,7 +75,10 @@ class IRT(Dataset):
             shape2 = image.shape
             # if shape1!= shape2:
             #       breakpoint()
-            image= cv.resize(image, (640,480), interpolation=cv.INTER_CUBIC)  #W,H,C   [200, 300, 3]
+            if self.size == 'b0':
+                  image= cv.resize(image, (227,227), interpolation=cv.INTER_CUBIC)  #W,H,C   [200, 300, 3]
+            else:
+                  image= cv.resize(image, (640,480), interpolation=cv.INTER_CUBIC)  #W,H,C   [200, 300, 3]
             image = image.transpose(2, 0, 1) #C,W,H  [3,200,300]
 
             if self.transform:
@@ -115,6 +124,8 @@ class IRTHybrid(Dataset):
       # Load data and get label
       label = self.labels[index]
       image = cv.imread(path, cv.IMREAD_COLOR)
+      if image.shape == (640, 480, 3):
+            image = np.rot90(image)
       #   print(image.shape)
       image= cv.resize(image, (227,227), interpolation=cv.INTER_CUBIC)  #W,H,C   [200, 300, 3]
       image = image.transpose(2, 0, 1) #C,W,H  [3,200,300]
@@ -126,7 +137,7 @@ class IRTHybrid(Dataset):
 
 class IRTHybrid2(Dataset):
   'Characterizes a dataset for PyTorch'
-  def __init__(self, images_paths, labels, data_path, dtype = 'img', transform=None):
+  def __init__(self, images_paths, labels, data_path, resize_type =False, dtype = 'img', transform=None):
         super(IRTHybrid2, self).__init__()
         'Initialization'
         self.labels = labels
@@ -135,7 +146,8 @@ class IRTHybrid2(Dataset):
         self.transform = transform
         self.data_path = data_path
         self.dtype = dtype
-
+        self.resize_type = resize_type
+      
   def __len__(self):
         'Denotes the total number of samples'
         return len(self.images_paths)
@@ -154,8 +166,12 @@ class IRTHybrid2(Dataset):
       # shape2 = image.shape
       # if shape1!= shape2
       # print(image.shape)
-      irt = np.pad(irt, ((120,120),(159, 160)))
-      # irt = cv.resize(irt, (640,480), interpolation=cv.INTER_CUBIC)
+      if self.resize_type == 'pad':
+            # print('padding')
+            irt = np.pad(irt, ((120,120),(159, 160)))
+      else:
+            # print('interpolation')
+            irt = cv.resize(irt, (640,480), interpolation=cv.INTER_CUBIC)
       irt = np.array([irt])
       # print(irt.shape)
       # irt= np.array([cv.resize(irt, (227,227), interpolation=cv.INTER_CUBIC)])  #W,H,C   [200, 300, 3]
