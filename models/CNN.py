@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from math import ceil
 import numpy as np
 from scipy.stats import kurtosis, skew, entropy, median_absolute_deviation
+import cv2
 
 ## Modified AlexNet implementation ------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -248,9 +249,10 @@ class InvertedResidualBlock(nn.Module):
 
 
 class EfficientNet(nn.Module):
-    def __init__(self,  dtype, version, num_classes):
+    def __init__(self,  dtype, version, num_classes, resize_type):
         super(EfficientNet, self).__init__()
         self.dtype = dtype
+        self.resize_type = resize_type
         width_factor, depth_factor, dropout_rate = self.calculate_factors(version)
         last_channels = ceil(1280 * width_factor)
         self.pool = nn.AdaptiveAvgPool2d(1)
@@ -318,11 +320,24 @@ class EfficientNet(nn.Module):
         elif self.dtype == 'hybrid2':
             # print('irt dim: ', irt.shape)
             # print('img dim: ', img.shape)
+            if self.resize_type == 'partial':
+                print('partial')
+                print(type(img), img.shape)
+                img = img.cpu().numpy()
+                print('after: ', type(img), img.shape)
+                img= cv2.resize(img, (227,227), interpolation=cv2.INTER_CUBIC)  #W,H,C   [200, 300, 3]\
+                img = torch.from_numpy(img).cuda(gpuID)
             x = img
             x = self.pool(self.features(x))
             x = x.view(x.shape[0], -1)
-            # irt = torch.Tensor.float(irt.view(irt.shape[0], -1))
-            irt = irt.cpu().numpy()
+            
+            if self.resize_type in ['original', 'partial']:
+                # print('features from original thermal_mat')
+                irt = irt[:,:,120:-120,159:-160].cpu().numpy()
+                # print(0 in np.unique(irt))
+            else:
+                irt = irt.cpu().numpy()
+                # print(irt.shape)
             # print(x.shape, irt.shape)
             # print(np.std(irt, axis = (2,3)).shape)
             # print(irt.min(axis = (2,3)).shape)
