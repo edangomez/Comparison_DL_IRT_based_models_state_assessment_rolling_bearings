@@ -166,7 +166,7 @@ class IRTHybrid2(Dataset):
       # shape2 = image.shape
       # if shape1!= shape2
       # print(image.shape)
-      if self.resize_type == 'pad':
+      if self.resize_type in ['pad', 'original']:
             # print('padding')
             irt = np.pad(irt, ((120,120),(159, 160)))
       else:
