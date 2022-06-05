@@ -68,7 +68,7 @@ def main():
                         help='file on which to save model weights')
     parser.add_argument('--size', type=str, default='b0', choices=['b0', 'original'],
                         help='for hybrid models, if you want to resize data to efficientNet resolution')
-    parser.add_argument('--resize_type', type=str, default='pad',choices=['pad', 'interpol'],
+    parser.add_argument('--resize_type', type=str, default='pad',choices=['pad', 'interpol', 'original'],
                         help='for hybrid models and no resize if padding is desired or interpolation')
     parser.add_argument('--save', type=str, default='no',choices=['yes', 'no'],
                         help='whether you want to save or not the testing')
@@ -199,7 +199,7 @@ def main():
 
         return loss_test/len(test_loader), accuracy,aca,f1_score,confusion_mx
 
-    model = model = EfficientNet(args.dtype, version='b0', num_classes=4)
+    model = model = EfficientNet(args.dtype, version='b0', num_classes=4, resize_type = args.resize_type)
     state_dict = torch.load('/home/edgomez10/Project/TB-and-IB-analysis-of-IRT-for-the-state-assessment-of-rolling-bearings-using-DL/Experiments_hybrid/efficientNEt_featvect_noResize_interpol/epoch_40.pt')
     model.load_state_dict(state_dict['state_dict'], strict=False)
     loss_test, accuracy,aca,f1_score,confusion_mx = testNet(args,model,x_test,y_test, dtype = args.dtype, gpuID = args.gpuID)
