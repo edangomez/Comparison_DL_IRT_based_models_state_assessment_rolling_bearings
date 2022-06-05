@@ -68,7 +68,7 @@ def main():
                         help='file on which to save model weights')
     parser.add_argument('--size', type=str, default='b0', choices=['b0', 'original'],
                         help='for hybrid models, if you want to resize data to efficientNet resolution')
-    parser.add_argument('--resize_type', type=str, default='pad',choices=['pad', 'interpol'],
+    parser.add_argument('--resize_type', type=str, default='pad',choices=['pad', 'interpol', 'original', 'partial'],
                         help='for hybrid models and no resize if padding is desired or interpolation')
 
 
@@ -134,7 +134,7 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
     ## Model setting
     # model = AlexNet(dtype=args.dtype)
     # model = HyAlexNet(dtype=args.dtype)
-    model = EfficientNet(dtype, version='b0', num_classes=4)
+    model = EfficientNet(dtype, version='b0', num_classes=4, resize_type = args.resize_type)
     if args.cuda:
         model = model.cuda(gpuID)
     g = torch.Generator()
@@ -176,6 +176,7 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
     ## Loss and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optimize.Adam(model.parameters(), lr= args.lr)#optimize.SGD(model.parameters(), lr= args.lr, momentum=args.momentum) 
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 8)
 
     start = time.time()
     losses = []
@@ -236,6 +237,7 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
             train_loss = train(epoch)
 
         train_l.append(float(train_loss/len(train_loader)))
+        scheduler.step()
         # print(train_l)
         print(f"Avg Loss in epoch {epoch} :  {train_loss/len(train_loader)}")       
         state = {
