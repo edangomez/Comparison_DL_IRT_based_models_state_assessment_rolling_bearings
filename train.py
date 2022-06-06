@@ -134,7 +134,7 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
     ## Model setting
     # model = AlexNet(dtype=args.dtype)
     # model = HyAlexNet(dtype=args.dtype)
-    model = EfficientNet(dtype, version='b0', num_classes=4, resize_type = args.resize_type)
+    model = EfficientNet(dtype, version='b2', num_classes=4, resize_type = args.resize_type)
     if args.cuda:
         model = model.cuda(gpuID)
     g = torch.Generator()
@@ -176,7 +176,7 @@ def trainNet(args,x_train,y_train,save_path, dtype, gpuID = 1):
     ## Loss and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optimize.Adam(model.parameters(), lr= args.lr)#optimize.SGD(model.parameters(), lr= args.lr, momentum=args.momentum) 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 8)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 8, gamma=0.3)
 
     start = time.time()
     losses = []
@@ -352,22 +352,3 @@ def testNet(args,model,x_test,y_test, dtype, gpuID):
 
 if __name__ == '__main__':
     main()
-
-# for batch_idx, (data,irt, target) in enumerate(test_loader):
-#             if args.cuda:
-#                 data, irt, target = data.cuda(gpuID), irt.cuda(gpuID), target.cuda(gpuID)
-#             data, irt, target = Variable(data), Variable(irt), Variable(target)
-#             data = data.float()
-#             irt = irt.float()
-#             ## Forward Pass
-#             outputs = model(data, irt)
-#             loss = criterion(outputs,target)
-#             # _, predictions = scores.max() #Apply log_softmax activation to the predictions and pick the index of highest probability.
-#             _, predictions = torch.max(outputs, 1)
-#             num_correct += (predictions == target).sum()
-#             num_samples += predictions.size(0)
-#             loss_test += loss.item()
-#             accuracy = num_correct /num_samples
-#             # breakpoint()
-#             preds=torch.cat((preds,predictions),0)
-#             labels=torch.cat((labels,target),0)
