@@ -55,4 +55,4 @@ To use our best model to perform classification over an image of your choice, ch
 ```
 python main.py --mode demo --img IR000016
 ```
-That's correct, please input the image name without extension, since we are using a hybrid model and .png and .csv files are used. Demo mode also accept ```--experiment``` argument to use other experiments for classification
+That's correct, please input the image name without extension, since we are using a hybrid model and .png and .csv files are used. Demo mode also accept ```--experiment``` argument to use weights from other experiments for IRT classification.
