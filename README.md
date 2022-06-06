@@ -28,7 +28,7 @@ BCV002: /home/edgomez10/Project/TB-and-IB-analysis-of-IRT-for-the-state-assessme
 ## Setup
 
 Clone our repository with 
-git clone hhttps://github.com/IBIO4490/semantic_segmentation-gomez_vargas.git
+git clone https://github.com/edangomez/TB-and-IB-analysis-of-IRT-for-the-state-assessment-of-rolling-bearings-using-DL.git
 
 You will find a vision2.yaml file to create and activate the proper virtual enviroment to run the main.py and train.py files.
 
@@ -37,12 +37,12 @@ You will find a vision2.yaml file to create and activate the proper virtual envi
 We added a file main.py which allow to reproduce the main experiments of our paper and perform classification over an image of your choice.
 
 ### test
-In order to reproduce the experiments of our paper run the following command
+In order to reproduce the experiments of our paper run the following command:
 ```
 python main.py --mode test
 
 ```
-This will reproduce our best performance approach, a feature vector hybrid model with bicubic interpolated thermal matrix. However, the *--experiment* argument will allow you to reproduce other experiments from the paper. Use as input to this argument the notation on the paper, e.g., to reproduce the 4 channel hybrid model with no resizing and zero padded thermal matrix use:
+This will reproduce our best performance approach, a feature vector hybrid model with bicubic interpolated thermal matrix. However, the ```--experiment``` argument will allow you to reproduce other experiments from the paper. Use as input to this argument the notation on the paper, e.g., to reproduce the 4 channel hybrid model with no resizing and zero padded thermal matrix use:
 
 ```
 python main.py --mode test --experiment 4-HynoRS-interpol
@@ -55,4 +55,4 @@ To use our best model to perform classification over an image of your choice, ch
 ```
 python main.py --mode demo --img IR000016
 ```
-That's correct, please input the image name without extension, since we are using a hybrid model and .png and .csv files are used. Demo mode also accept *--experiment* argument to use other experiments for classification
+That's correct, please input the image name without extension, since we are using a hybrid model and .png and .csv files are used. Demo mode also accept ```--experiment``` argument to use other experiments for classification
