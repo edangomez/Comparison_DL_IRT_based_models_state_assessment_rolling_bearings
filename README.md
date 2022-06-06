@@ -1,9 +1,5 @@
 # Temperature based and intensity based analysis of infrared images for the state assessment of rolling bearings using Deep learning methods
 
-Pytorch implementation of the convolutional neural network used for this paper
-
-## Proposed architecture
-
 In this paper we evaluate the which type of data from IRT is best for image classification. Infrared Thermography has two types of data: thermal pixel matrix and thermal images. For evaluation we use EfficientNet, first using thermal pixel matrix and thermal images as inputs, and then we propose a hybrid model that combines the two types of data.
 
 ## Hybrid Model
