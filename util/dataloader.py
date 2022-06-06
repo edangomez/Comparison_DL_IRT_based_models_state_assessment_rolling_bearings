@@ -8,7 +8,7 @@ import os
 import cv2 as cv
 from numpy import dtype
 
-import torch
+import torch 
 from torch.utils.data import Dataset
 from util.func import csv2numpy
 import numpy as np
