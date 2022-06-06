@@ -138,7 +138,7 @@ class HyAlexNet(nn.Module):
         x = F.relu(self.fc2(x)) # out_dim [4096x1]
         x = F.relu(self.fc3(x)) # out_dim [4096x1]
         x = self.fc4(x) # out_dim [1000x1]
-
+                
         return x
 
 ## EfficientNet implementation ----------------------------------------------------------------------------------------------------------------------------------------------------
