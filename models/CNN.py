@@ -11,11 +11,12 @@ import cv2
 
 class AlexNet(nn.Module):
     
-    def __init__(self, dtype):
+    def __init__(self, dtype, resize_type):
         super(AlexNet, self).__init__()
-
+        self.dtype = dtype
+        self.resize_type = resize_type
         ##Combinada
-        if dtype == 'img':
+        if self.dtype == 'img':
             self.conv1 = nn.Conv2d(in_channels=3, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
             self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
             self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) 
@@ -38,6 +39,19 @@ class AlexNet(nn.Module):
             self.conv3 = nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, stride= 1, padding= 1) 
             self.conv4 = nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1) 
             self.fc1  = nn.Linear(in_features= 3456, out_features= 2304)
+            self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
+            self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
+            self.fc4 = nn.Linear(in_features=4096 , out_features=4)
+        if dtype == 'hybrid2':
+            self.conv1 = nn.Conv2d(in_channels=3, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
+            self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
+            self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) 
+            self.conv2 = nn.Conv2d(in_channels=96, out_channels=256, kernel_size=5, stride= 1, padding= 4)
+            self.weight2 = self.conv2.weight.data.numpy()
+
+            self.conv3 = nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, stride= 1, padding= 1) 
+            self.conv4 = nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1) 
+            self.fc1  = nn.Linear(in_features= 3456+5, out_features= 2304)
             self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
             self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
             self.fc4 = nn.Linear(in_features=4096 , out_features=4)
@@ -75,12 +89,12 @@ class AlexNet(nn.Module):
 
         return x
 class HyAlexNet(nn.Module):
-    
-    def __init__(self, dtype):
+    def __init__(self, dtype, resize_type):
         super(HyAlexNet, self).__init__()
-
+        self.dtype = dtype
+        self.resize_type = resize_type
         ##Combinada
-        if dtype == 'img':
+        if self.dtype == 'img':
             self.conv1 = nn.Conv2d(in_channels=3, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
             self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
             self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) 
@@ -93,7 +107,7 @@ class HyAlexNet(nn.Module):
             self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
             self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
             self.fc4 = nn.Linear(in_features=4096 , out_features=4)
-        elif dtype == 'hybrid':
+        elif self.dtype == 'hybrid':
             self.conv1 = nn.Conv2d(in_channels=4, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
             self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
             self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) 
@@ -106,7 +120,20 @@ class HyAlexNet(nn.Module):
             self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
             self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
             self.fc4 = nn.Linear(in_features=4096 , out_features=4)
-        elif dtype == 'irt':
+        elif self.dtype == 'hybrid2':
+            self.conv1 = nn.Conv2d(in_channels=3, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
+            self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
+            self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2) 
+            self.conv2 = nn.Conv2d(in_channels=96, out_channels=256, kernel_size=5, stride= 1, padding= 4)
+            self.weight2 = self.conv2.weight.data.numpy()
+
+            self.conv3 = nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, stride= 1, padding= 1) 
+            self.conv4 = nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1) 
+            self.fc1  = nn.Linear(in_features= 26885, out_features= 2304)
+            self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
+            self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
+            self.fc4 = nn.Linear(in_features=4096 , out_features=4)
+        elif self.dtype == 'irt':
             print('using irt_mat data')
             self.conv1 = nn.Conv2d(in_channels=1, out_channels= 96, kernel_size= 9, stride=2, padding=0 ) 
             self.batchNorm1 = nn.BatchNorm2d(num_features=96), 
@@ -114,33 +141,93 @@ class HyAlexNet(nn.Module):
             self.conv2 = nn.Conv2d(in_channels=96, out_channels=256, kernel_size=5, stride= 1, padding= 4)
             self.conv3 = nn.Conv2d(in_channels=256, out_channels=384, kernel_size=3, stride= 1, padding= 1) 
             self.conv4 = nn.Conv2d(in_channels=384, out_channels=384, kernel_size=3, stride=1, padding=1) 
-            self.fc1  = nn.Linear(in_features= 3456, out_features= 2304)
+            self.fc1  = nn.Linear(in_features= 5760, out_features= 2304)
             self.fc2  = nn.Linear(in_features= 2304, out_features= 4096)
             self.fc3  = nn.Linear(in_features= 4096, out_features= 4096)
             self.fc4 = nn.Linear(in_features=4096 , out_features=4)
 
-    def forward(self,img, irt):
+    def forward(self,img, irt=None, gpuID = 1):
         # print(img.size, irt.size)
-        img = torch.cat((img, irt), axis = 1)
-        x = F.relu(self.conv1(img)) # out_dim [110x110x96]
-        x = self.maxpool(x) # out_dim [55x55x96]
-        x = F.relu(self.conv2(x))  # out_dim [29x29x256]
-        x = self.maxpool(x)  # out_dim [14x14x256]
-        # plt.imshow(self.weight2[0, 2])
-        # plt.show()
-        x = F.relu(self.conv3(x)) # out_dim [14x14x384]
-        x = self.maxpool(x)  # out_dim [7x7x256]
-        x = F.relu(self.conv4(x)) # out_dim [8x8x384]
-        x = self.maxpool(x)  # out_dim [4x4x256]
-        x = self.maxpool(x)  # out_dim [6x6x256]
-        x = x.reshape(x.shape[0], -1)  # out_dim [9216x1]
-        x = F.relu(self.fc1(x)) # out_dim [4096x1]
-        x = F.relu(self.fc2(x)) # out_dim [4096x1]
-        x = F.relu(self.fc3(x)) # out_dim [4096x1]
-        x = self.fc4(x) # out_dim [1000x1]
-                
+        if self.dtype in ['img', 'irt']:
+            x = F.relu(self.conv1(img)) # out_dim [110x110x96]
+            x = self.maxpool(x) # out_dim [55x55x96]
+            x = F.relu(self.conv2(x))  # out_dim [29x29x256]
+            x = self.maxpool(x)  # out_dim [14x14x256]
+            # plt.imshow(self.weight2[0, 2])
+            # plt.show()
+            x = F.relu(self.conv3(x)) # out_dim [14x14x384]
+            x = self.maxpool(x)  # out_dim [7x7x256]
+            x = F.relu(self.conv4(x)) # out_dim [8x8x384]
+            x = self.maxpool(x)  # out_dim [4x4x256]
+            x = self.maxpool(x)  # out_dim [6x6x256]
+            x = x.reshape(x.shape[0], -1)  # out_dim [9216x1]
+            # print(x.shape)
+            x = F.relu(self.fc1(x)) # out_dim [4096x1]
+            x = F.relu(self.fc2(x)) # out_dim [4096x1]
+            x = F.relu(self.fc3(x)) # out_dim [4096x1]
+            x = self.fc4(x) # out_dim [1000x1]
+        elif self.dtype == 'hybrid':
+            img = torch.cat((img, irt), axis = 1)
+            x = F.relu(self.conv1(img)) # out_dim [110x110x96]
+            x = self.maxpool(x) # out_dim [55x55x96]
+            x = F.relu(self.conv2(x))  # out_dim [29x29x256]
+            x = self.maxpool(x)  # out_dim [14x14x256]
+            # plt.imshow(self.weight2[0, 2])
+            # plt.show()
+            x = F.relu(self.conv3(x)) # out_dim [14x14x384]
+            x = self.maxpool(x)  # out_dim [7x7x256]
+            x = F.relu(self.conv4(x)) # out_dim [8x8x384]
+            x = self.maxpool(x)  # out_dim [4x4x256]
+            x = self.maxpool(x)  # out_dim [6x6x256]
+            x = x.reshape(x.shape[0], -1)  # out_dim [9216x1]
+            x = F.relu(self.fc1(x)) # out_dim [4096x1]
+            x = F.relu(self.fc2(x)) # out_dim [4096x1]
+            x = F.relu(self.fc3(x)) # out_dim [4096x1]
+            x = self.fc4(x) # out_dim [1000x1]
+        elif self.dtype == 'hybrid2':
+            if self.resize_type == 'partial':
+                print('partial')
+                print(type(img), img.shape)
+                img = img.cpu().numpy()
+                print('after: ', type(img), img.shape)
+                img= cv2.resize(img, (227,227), interpolation=cv2.INTER_CUBIC)  #W,H,C   [200, 300, 3]\
+                img = torch.from_numpy(img).cuda(gpuID)
+            if self.resize_type in ['original', 'partial']:
+                # print('features from original thermal_mat')
+                irt = irt[:,:,120:-120,159:-160].cpu().numpy()
+                # print(0 in np.unique(irt))
+            else:
+                irt = irt.cpu().numpy()
+                # print(irt.shape)
+            # print(x.shape, irt.shape)
+            # print(np.std(irt, axis = (2,3)).shape)
+            # print(irt.min(axis = (2,3)).shape)
+            feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
+            feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
+            
+            x = F.relu(self.conv1(img)) # out_dim [110x110x96]
+            x = self.maxpool(x) # out_dim [55x55x96]
+            x = F.relu(self.conv2(x))  # out_dim [29x29x256]
+            x = self.maxpool(x)  # out_dim [14x14x256]
+            # plt.imshow(self.weight2[0, 2])
+            # plt.show()
+            x = F.relu(self.conv3(x)) # out_dim [14x14x384]
+            x = self.maxpool(x)  # out_dim [7x7x256]
+            x = F.relu(self.conv4(x)) # out_dim [8x8x384]
+            x = self.maxpool(x)  # out_dim [4x4x256]
+            x = self.maxpool(x)  # out_dim [6x6x256]
+            x = x.reshape(x.shape[0], -1)  # out_dim [9216x1]
+            # print(x.shape)
+            x = torch.cat((x, feat_vect), axis=1)
+            # print(x.shape)
+            x = F.relu(self.fc1(x)) # out_dim [4096x1]
+            x = F.relu(self.fc2(x)) # out_dim [4096x1]
+            x = F.relu(self.fc3(x)) # out_dim [4096x1]
+            x = self.fc4(x) # out_dim [1000x1]
+
         return x
 
+        
 ## EfficientNet implementation ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 base_model = [
@@ -257,7 +344,7 @@ class EfficientNet(nn.Module):
         last_channels = ceil(1280 * width_factor)
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.features = self.create_features(width_factor, depth_factor, last_channels, dtype) # most of the backbone here
-        if self.dtype =='hybrid2':
+        if self.dtype in ['hybrid2', 'hybrid3']:
             self.classifier = nn.Sequential(
                 nn.Dropout(dropout_rate),
                 nn.Linear(last_channels+5, num_classes),
@@ -280,7 +367,7 @@ class EfficientNet(nn.Module):
             features = [CNNBlock(3, channels, 3, stride=2, padding=1)]
         elif dtype == 'irt':
             features = [CNNBlock(1, channels, 3, stride=2, padding=1)]
-        elif dtype == 'hybrid':
+        elif dtype in ['hybrid', 'hybrid3']:
             features = [CNNBlock(4, channels, 3, stride=2, padding=1)]
         in_channels = channels
 
@@ -346,9 +433,35 @@ class EfficientNet(nn.Module):
             # print(x.shape, feat_vect.shape)
             x = torch.cat((x, feat_vect), axis=1)
             return self.classifier(x)
-
-
-
+        elif self.dtype == 'hybrid3':
+            # print('irt dim: ', irt.shape)
+            # print('img dim: ', img.shape)
+            if self.resize_type == 'partial':
+                print('partial')
+                print(type(img), img.shape)
+                img = img.cpu().numpy()
+                print('after: ', type(img), img.shape)
+                img= cv2.resize(img, (227,227), interpolation=cv2.INTER_CUBIC)  #W,H,C   [200, 300, 3]\
+                img = torch.from_numpy(img).cuda(gpuID)
+            x = torch.cat((img, irt), axis = 1)
+            x = self.pool(self.features(x))
+            x = x.view(x.shape[0], -1)
+            
+            if self.resize_type in ['original', 'partial']:
+                # print('features from original thermal_mat')
+                irt = irt[:,:,120:-120,159:-160].cpu().numpy()
+                # print(0 in np.unique(irt))
+            else:
+                irt = irt.cpu().numpy()
+                # print(irt.shape)
+            # print(x.shape, irt.shape)
+            # print(np.std(irt, axis = (2,3)).shape)
+            # print(irt.min(axis = (2,3)).shape)
+            feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
+            feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
+            # print(x.shape, feat_vect.shape)
+            x = torch.cat((x, feat_vect), axis=1)
+            return self.classifier(x)
 def test():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     version = "b0"
@@ -361,3 +474,124 @@ def test():
     ).to(device)
 
     print(model(x).shape) # (num_examples, num_classes)
+
+
+## VGG Implementation -----------------------------------------------------------------------------------------------------------------------------------
+
+VGG_types = {
+    "VGG11": [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+    "VGG13": [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
+    "VGG16": [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"],
+    "VGG19": [64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
+}
+
+
+class VGG_net(nn.Module):
+    def __init__(self, dtype, resize_type, num_classes=4):
+        super(VGG_net, self).__init__()
+        self.dtype =dtype
+        if dtype in ['img', 'hybrid2']:
+            self.in_channels = 3
+        elif dtype == 'irt':
+            self.in_channels = 1
+        elif dtype in ['hybrid', 'hybrid3']:
+            self.in_channels = 4
+        self.conv_layers = self.create_conv_layers(VGG_types["VGG19"])
+        self.resize_type = resize_type
+
+        if self.dtype in ['hybrid2', 'hybrid3']:
+            self.fcs = nn.Sequential(
+            nn.Linear(512 * 7 * 7+5#+128512
+            , 4096),
+            nn.ReLU(),
+            nn.Dropout(p=0.5),
+            nn.Linear(4096, 4096),
+            nn.ReLU(),
+            nn.Dropout(p=0.5),
+            nn.Linear(4096, num_classes))
+        else:
+            self.fcs = nn.Sequential(
+            nn.Linear(25088#512 * 7 * 7+10752#+128512
+            , 4096),
+            nn.ReLU(),
+            nn.Dropout(p=0.5),
+            nn.Linear(4096, 4096),
+            nn.ReLU(),
+            nn.Dropout(p=0.5),
+            nn.Linear(4096, num_classes))
+
+    def forward(self, img, irt =None, gpuID = 1):
+        if self.dtype in ['irt', 'img']:
+            x = self.conv_layers(img)
+            x = x.reshape(x.shape[0], -1)
+            x = self.fcs(x)
+        elif self.dtype == 'hybrid':
+            x = torch.cat((img, irt), axis = 1)
+            x = self.conv_layers(x)
+            x = x.reshape(x.shape[0], -1)
+            x = self.fcs(x)
+        elif self.dtype == 'hybrid2':
+            # print(img.shape)
+            x = self.conv_layers(img)
+            if self.resize_type in ['original', 'partial']:
+                # print('features from original thermal_mat')
+                irt = irt[:,:,120:-120,159:-160].cpu().numpy()
+                # print(0 in np.unique(irt))
+            else:
+                irt = irt.cpu().numpy()
+                # print(irt.shape)
+            # print(x.shape, irt.shape)
+            # print(np.std(irt, axis = (2,3)).shape)
+            # print(irt.min(axis = (2,3)).shape)
+            feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
+            feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
+            x = x.reshape(x.shape[0], -1)
+            x = torch.cat((x, feat_vect), axis=1)
+            x = self.fcs(x)
+        elif self.dtype == 'hybrid3':
+            # print(img.shape, irt.shape)
+            x = torch.cat((img, irt), axis = 1)
+            x = self.conv_layers(x)
+            if self.resize_type in ['original', 'partial']:
+                # print('features from original thermal_mat')
+                irt = irt[:,:,120:-120,159:-160].cpu().numpy()
+                # print(0 in np.unique(irt))
+            else:
+                irt = irt.cpu().numpy()
+                # print(irt.shape)
+            # print(x.shape, irt.shape)
+            # print(np.std(irt, axis = (2,3)).shape)
+            # print(irt.min(axis = (2,3)).shape)
+            feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
+            feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
+            x = x.reshape(x.shape[0], -1)
+            x = torch.cat((x, feat_vect), axis=1)
+            x = self.fcs(x)
+        return x
+
+    def create_conv_layers(self, architecture):
+        layers = []
+        in_channels = self.in_channels
+
+        for x in architecture:
+            if type(x) == int:
+                out_channels = x
+
+                layers += [
+                    nn.Conv2d(
+                        in_channels=in_channels,
+                        out_channels=out_channels,
+                        kernel_size=(3, 3),
+                        stride=(1, 1),
+                        padding=(1, 1),
+                    ),
+                    nn.BatchNorm2d(x),
+                    nn.ReLU(),
+                ]
+                in_channels = x
+            elif x == "M":
+                layers += [nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))]
+
+        return nn.Sequential(*layers)
+
+
