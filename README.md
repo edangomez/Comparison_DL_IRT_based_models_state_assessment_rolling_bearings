@@ -1,6 +1,8 @@
 # A comparison of deep learning thermography-based methods for the state assessment of rolling bearings
 
-Code for Hybrid and non Hybrid convolutional models (based on EfficientNet and VGG19) for the state assessment of rolling bearings using infrared thermography.
+Code for Hybrid and non Hybrid convolutional models for the state assessment of rolling bearings using infrared thermography.
+
+In this paper we compare different convolutional approaches (based on EfficientNet and VGG19) for the classification of IRT data for the state assessment of rolling bearings.
 
 ## Hybrid Model
 
