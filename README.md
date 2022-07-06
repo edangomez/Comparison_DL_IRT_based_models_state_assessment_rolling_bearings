@@ -1,32 +1,12 @@
-# Temperature based and intensity based analysis of infrared images for the state assessment of rolling bearings using Deep learning methods
+# A comparison of deep learning thermography-based methods for the state assessment of rolling bearings
 
-In this paper we evaluate the which type of data from IRT is best for image classification. Infrared Thermography has two types of data: thermal pixel matrix and thermal images. For evaluation we use EfficientNet, first using thermal pixel matrix and thermal images as inputs, and then we propose a hybrid model that combines the two types of data.
+Code for Hybrid and non Hybrid convolutional models (based on EfficientNet and VGG19) for the state assessment of rolling bearings using infrared thermography.
 
 ## Hybrid Model
 
 For the hybrid model we tested two types of input data:
 - Concatenating thermal pixel matrix to the thermal images and use this 4-channel data as input to the CNN.
-- Using original image as input to the convolutional backbone and use feature vector from the thermal pixel matrix as input to the linear classification layers.
-
-## Dataset
-
-The dataset can be found in the following path:
-
-```
-BCV002: /home/edgomez10/Project/TB-and-IB-analysis-of-IRT-for-the-state-assessment-of-rolling-bearings-using-DL/data
-```
-
-The test set can be found in:
-```
-BCV002: /home/edgomez10/Project/TB-and-IB-analysis-of-IRT-for-the-state-assessment-of-rolling-bearings-using-DL/data_test
-
-```
-## Setup
-
-Clone our repository with 
-git clone https://github.com/edangomez/TB-and-IB-analysis-of-IRT-for-the-state-assessment-of-rolling-bearings-using-DL.git
-
-You will find a vision2.yaml file to create and activate the proper virtual enviroment to run the main.py and train.py files.
+- Using original thermal image as input to the convolutional backbone and use feature vector from temperature data as input to the linear classification layers.
 
 ## main.py
 
