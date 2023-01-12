@@ -204,7 +204,7 @@ def trainNet(args,x_train,y_train,x_val, y_val,save_path, dtype, gpuID = 1):
     print(len)
     ## Loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = optimize.Adam(model.parameters(), lr= args.lr)#optimize.SGD(model.parameters(), lr= args.lr, momentum=args.momentum) 
+    optimizer = optimize.Adam(model.parameters(), lr= args.lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 8, gamma=0.3)
 
     start = time.time()
@@ -313,8 +313,6 @@ def trainNet(args,x_train,y_train,x_val, y_val,save_path, dtype, gpuID = 1):
             np_losses = pd.DataFrame(np_losses)
             train_lo = pd.DataFrame(np.array(train_l))
             train_lo.to_csv(os.path.join(save_path, f'loss_{args.experiment_name}.csv'))
-            # if epoch>10:
-            #     breakpoint()
             np_losses.to_csv(os.path.join(save_path, f'{args.experiment_name}.csv'))
             print('best model saved:', name)
         elif checkpoint:
@@ -326,8 +324,6 @@ def trainNet(args,x_train,y_train,x_val, y_val,save_path, dtype, gpuID = 1):
             np_losses = pd.DataFrame(np_losses)
             train_lo = pd.DataFrame(np.array(train_l))
             train_lo.to_csv(os.path.join(save_path, f'loss_{args.experiment_name}.csv'))
-            # if epoch>10:
-            #     breakpoint()
             np_losses.to_csv(os.path.join(save_path, f'{args.experiment_name}.csv'))
             print('Checkpoint saved:', name)
         return best_aca
@@ -349,7 +345,6 @@ def trainNet(args,x_train,y_train,x_val, y_val,save_path, dtype, gpuID = 1):
 
         train_l.append(float(train_loss/len(train_loader)))
         scheduler.step()
-        # print(train_l)
         print(f"Avg Loss in epoch {epoch} :  {train_loss/len(train_loader)}")       
         state = {
             'epoch': epoch,
@@ -395,10 +390,9 @@ def testNet(args,model,x_test,y_test, dtype, gpuID):
     elif dtype in ['hybrid', 'hybrid2', 'hybrid3']:
         print(f'Test {args.dtype} data loading ...')
         if args.size == 'b0':
-            test_dataset=IRTHybrid(x_test, y_test, ROOT_PATH, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
+            test_dataset=IRTHybrid(x_test, y_test, ROOT_PATH, transform=None)
         else:
-            test_dataset=IRTHybrid2(x_test, y_test, ROOT_PATH, resize_type= args.resize_type, transform=None) #transforms.Compose([transforms.ToTensor()]), train_transforms
-
+            test_dataset=IRTHybrid2(x_test, y_test, ROOT_PATH, resize_type= args.resize_type, transform=None)
     test_loader = DataLoader(test_dataset,batch_size=args.batchSize, shuffle=True,**kwargs)
     
     criterion = nn.CrossEntropyLoss()
@@ -458,22 +452,3 @@ def testNet(args,model,x_test,y_test, dtype, gpuID):
 
 if __name__ == '__main__':
     main()
-
-# for batch_idx, (data,irt, target) in enumerate(test_loader):
-#             if args.cuda:
-#                 data, irt, target = data.cuda(gpuID), irt.cuda(gpuID), target.cuda(gpuID)
-#             data, irt, target = Variable(data), Variable(irt), Variable(target)
-#             data = data.float()
-#             irt = irt.float()
-#             ## Forward Pass
-#             outputs = model(data, irt)
-#             loss = criterion(outputs,target)
-#             # _, predictions = scores.max() #Apply log_softmax activation to the predictions and pick the index of highest probability.
-#             _, predictions = torch.max(outputs, 1)
-#             num_correct += (predictions == target).sum()
-#             num_samples += predictions.size(0)
-#             loss_test += loss.item()
-#             accuracy = num_correct /num_samples
-#             # breakpoint()
-#             preds=torch.cat((preds,predictions),0)
-#             labels=torch.cat((labels,target),0)
