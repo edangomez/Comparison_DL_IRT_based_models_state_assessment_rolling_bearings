@@ -400,13 +400,10 @@ class EfficientNet(nn.Module):
             x = self.pool(self.features(x))
             return self.classifier(x.view(x.shape[0], -1))
         elif self.dtype == 'hybrid':
-            # print(irt.shape, img.shape)
             x = torch.cat((img, irt), axis = 1)
             x = self.pool(self.features(x))
             return self.classifier(x.view(x.shape[0], -1))
         elif self.dtype == 'hybrid2':
-            # print('irt dim: ', irt.shape)
-            # print('img dim: ', img.shape)
             if self.resize_type == 'partial':
                 print('partial')
                 print(type(img), img.shape)
@@ -419,23 +416,14 @@ class EfficientNet(nn.Module):
             x = x.view(x.shape[0], -1)
             
             if self.resize_type in ['original', 'partial']:
-                # print('features from original thermal_mat')
                 irt = irt[:,:,120:-120,159:-160].cpu().numpy()
-                # print(0 in np.unique(irt))
             else:
                 irt = irt.cpu().numpy()
-                # print(irt.shape)
-            # print(x.shape, irt.shape)
-            # print(np.std(irt, axis = (2,3)).shape)
-            # print(irt.min(axis = (2,3)).shape)
             feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
             feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
-            # print(x.shape, feat_vect.shape)
             x = torch.cat((x, feat_vect), axis=1)
             return self.classifier(x)
         elif self.dtype == 'hybrid3':
-            # print('irt dim: ', irt.shape)
-            # print('img dim: ', img.shape)
             if self.resize_type == 'partial':
                 print('partial')
                 print(type(img), img.shape)
@@ -448,18 +436,11 @@ class EfficientNet(nn.Module):
             x = x.view(x.shape[0], -1)
             
             if self.resize_type in ['original', 'partial']:
-                # print('features from original thermal_mat')
                 irt = irt[:,:,120:-120,159:-160].cpu().numpy()
-                # print(0 in np.unique(irt))
             else:
-                irt = irt.cpu().numpy()
-                # print(irt.shape)
-            # print(x.shape, irt.shape)
-            # print(np.std(irt, axis = (2,3)).shape)
-            # print(irt.min(axis = (2,3)).shape)
+                irt = irt.cpu().numpy() 
             feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
             feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
-            # print(x.shape, feat_vect.shape)
             x = torch.cat((x, feat_vect), axis=1)
             return self.classifier(x)
 def test():
@@ -534,34 +515,21 @@ class VGG_net(nn.Module):
             # print(img.shape)
             x = self.conv_layers(img)
             if self.resize_type in ['original', 'partial']:
-                # print('features from original thermal_mat')
                 irt = irt[:,:,120:-120,159:-160].cpu().numpy()
-                # print(0 in np.unique(irt))
             else:
                 irt = irt.cpu().numpy()
-                # print(irt.shape)
-            # print(x.shape, irt.shape)
-            # print(np.std(irt, axis = (2,3)).shape)
-            # print(irt.min(axis = (2,3)).shape)
             feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
             feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
             x = x.reshape(x.shape[0], -1)
             x = torch.cat((x, feat_vect), axis=1)
             x = self.fcs(x)
         elif self.dtype == 'hybrid3':
-            # print(img.shape, irt.shape)
             x = torch.cat((img, irt), axis = 1)
             x = self.conv_layers(x)
             if self.resize_type in ['original', 'partial']:
-                # print('features from original thermal_mat')
                 irt = irt[:,:,120:-120,159:-160].cpu().numpy()
-                # print(0 in np.unique(irt))
             else:
                 irt = irt.cpu().numpy()
-                # print(irt.shape)
-            # print(x.shape, irt.shape)
-            # print(np.std(irt, axis = (2,3)).shape)
-            # print(irt.min(axis = (2,3)).shape)
             feat_vect = np.concatenate((np.mean(irt, axis = (2,3)), np.median(irt, axis = (2,3)), np.std(irt, axis = (2,3)), irt.max(axis = (2,3)), irt.min(axis = (2,3))),axis =1)
             feat_vect = torch.from_numpy(feat_vect).cuda(gpuID)
             x = x.reshape(x.shape[0], -1)
